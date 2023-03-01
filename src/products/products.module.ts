@@ -9,6 +9,9 @@ import { BrandsService } from './services/brands.service';
 import { CategoriesService } from './services/categories.service';
 import { Product, ProductSchema } from './entities/product.entity';
 import { Brand, BrandSchema } from './entities/brand.entity';
+import { Feature, FeatureSchema } from './entities/feature.entity';
+import { FeaturesController } from './controllers/features.controller';
+import { FeaturesService } from './services/features.service';
 
 @Module({
   imports: [
@@ -21,10 +24,24 @@ import { Brand, BrandSchema } from './entities/brand.entity';
         name: Brand.name,
         schema: BrandSchema,
       },
+      {
+        name: Feature.name,
+        schema: FeatureSchema,
+      },
     ]),
   ],
-  controllers: [ProductsController, CategoriesController, BrandsController],
-  providers: [ProductsService, BrandsService, CategoriesService],
+  controllers: [
+    ProductsController,
+    CategoriesController,
+    BrandsController,
+    FeaturesController,
+  ],
+  providers: [
+    ProductsService,
+    BrandsService,
+    CategoriesService,
+    FeaturesService,
+  ],
   exports: [ProductsService],
 })
 export class ProductsModule {}

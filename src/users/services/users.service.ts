@@ -1,5 +1,8 @@
 import { Injectable, NotFoundException, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Model } from 'mongoose';
+import { InjectModel } from '@nestjs/mongoose';
+import * as bcrypt from 'bcrypt';
 
 import { User } from '../entities/user.entity';
 import { Order } from '../entities/order.entity';
@@ -11,69 +14,51 @@ import { ProductsService } from './../../products/services/products.service';
 export class UsersService {
   constructor(
     private productsService: ProductsService,
-    private configService: ConfigService,
+    @InjectModel(User.name) private userModel: Model<User>,
   ) {}
 
-  private counterId = 1;
-  private users: User[] = [
-    {
-      id: 1,
-      email: 'correo@mail.com',
-      password: '12345',
-      role: 'admin',
-    },
-  ];
-
-  findAll() {
-    const apiKey = this.configService.get('API_KEY');
-    const dbName = this.configService.get('DATABASE_NAME');
-    console.log(apiKey, dbName);
-    return this.users;
+  async findAll() {
+    return await this.userModel.find().exec();
   }
 
-  findOne(id: number) {
-    const user = this.users.find((item) => item.id === id);
+  async findOne(id: string) {
+    const user = await this.userModel.findById(id);
     if (!user) {
       throw new NotFoundException(`User #${id} not found`);
     }
     return user;
   }
 
-  create(data: CreateUserDto) {
-    this.counterId = this.counterId + 1;
-    const newUser = {
-      id: this.counterId,
-      ...data,
-    };
-    this.users.push(newUser);
-    return newUser;
+  async findByEmail(email: string) {
+    const user = this.userModel.findOne({ email });
+    return user;
   }
 
-  update(id: number, changes: UpdateUserDto) {
-    const user = this.findOne(id);
-    const index = this.users.findIndex((item) => item.id === id);
-    this.users[index] = {
-      ...user,
-      ...changes,
-    };
-    return this.users[index];
+  async create(data: CreateUserDto) {
+    const newUser = new this.userModel(data);
+    const hashPassword = await bcrypt.hash(newUser.password, 10);
+    newUser.password = hashPassword;
+    const model = await newUser.save();
+    const { password, ...rta } = model.toJSON();
+    return rta;
   }
 
-  remove(id: number) {
-    const index = this.users.findIndex((item) => item.id === id);
-    if (index === -1) {
-      throw new NotFoundException(`User #${id} not found`);
-    }
-    this.users.splice(index, 1);
-    return true;
+  async update(id: string, changes: UpdateUserDto) {
+    return await this.userModel
+      .findByIdAndUpdate(id, { $set: changes }, { new: true })
+      .exec();
   }
 
-  async getOrderByUser(id: number) {
-    const user = this.findOne(id);
-    return {
-      date: new Date(),
-      user,
-      products: await this.productsService.findAll(),
-    };
+  async remove(id: string) {
+    return await this.userModel.findByIdAndDelete(id);
   }
+
+  // async getOrderByUser(id: number) {
+  //   const user = this.findOne(id);
+  //   return {
+  //     date: new Date(),
+  //     user,
+  //     products: await this.productsService.findAll(),
+  //   };
+  // }
 }

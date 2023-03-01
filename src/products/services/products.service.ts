@@ -26,6 +26,7 @@ export class ProductsService {
       return this.productModel
         .find(filters)
         .populate('brand')
+        .populate('features')
         .skip(offset)
         .limit(limit)
         .exec();
@@ -37,6 +38,7 @@ export class ProductsService {
     const product = await this.productModel
       .findOne({ _id: id })
       .populate('brand')
+      .populate('features')
       .exec();
     if (!product) {
       throw new NotFoundException(`Product #${id} not found`);
@@ -53,6 +55,7 @@ export class ProductsService {
     const updatedProduct = await this.productModel
       .findByIdAndUpdate(id, { $set: changes }, { new: true })
       .populate('brand')
+      .populate('features')
       .exec();
     if (!updatedProduct) {
       throw new NotFoundException(`Product #${id} not found`);
