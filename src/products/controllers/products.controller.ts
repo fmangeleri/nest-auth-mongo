@@ -23,20 +23,24 @@ import { MongoIdPipe } from '../../common/mongoId.pipe';
 import { FilterProductsDto } from '../dtos/products.dtos';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { Public } from 'src/auth/decorators/public.decorator';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { Role } from 'src/auth/models/roles.model';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @ApiTags('products')
 @Controller('products')
 export class ProductsController {
   constructor(private productsService: ProductsService) {}
 
-  @Public()
+  @Roles(Role.CUSTOMER)
   @Get()
   @ApiOperation({ summary: 'List of products' })
   async getProducts(@Query() params: FilterProductsDto) {
     return await this.productsService.findAll(params);
   }
 
+  @Roles(Role.ADMIN)
   @Get(':productId')
   @HttpCode(HttpStatus.ACCEPTED)
   async getOne(@Param('productId', MongoIdPipe) productId: string) {
